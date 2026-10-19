@@ -29,8 +29,8 @@ class Place {
     var category: PlaceCategory   // enum
     var rating: Double            // number (0.0 – 5.0)
     var priceLevel: Int           // number (1 – 4, i.e. $ to $$$$)
-    var lastVisited: Date?         // Date
-    var notes: String?
+    var lastVisited: Date         // Date
+    var notes: String
 
     init(id: UUID = UUID(),
          name: String,
