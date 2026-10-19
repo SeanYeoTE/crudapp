@@ -1,4 +1,5 @@
 import Foundation
+import CoreLocation
 
 /// The kind of place. Backed by String so it's easy to display and (later) encode.
 enum PlaceCategory: String, CaseIterable {
@@ -31,6 +32,7 @@ class Place {
     var priceLevel: Int           // number (1 – 4, i.e. $ to $$$$)
     var lastVisited: Date         // Date
     var notes: String
+    var coordinate: CLLocationCoordinate2D?
 
     init(id: UUID = UUID(),
          name: String,
@@ -38,7 +40,8 @@ class Place {
          rating: Double,
          priceLevel: Int,
          lastVisited: Date,
-         notes: String = "") {
+         notes: String = "",
+         coordinate: CLLocationCoordinate2D? = nil) {
         self.id = id
         self.name = name
         self.category = category
@@ -46,6 +49,7 @@ class Place {
         self.priceLevel = min(max(priceLevel, 1), 4)
         self.lastVisited = lastVisited
         self.notes = notes
+        self.coordinate = coordinate
     }
 
     /// "$$" style string for display.
@@ -61,15 +65,20 @@ extension Place {
         let now = Date()
         return [
             Place(name: "Tiong Bahru Bakery", category: .bakery, rating: 4.5, priceLevel: 2,
-                  lastVisited: now.addingTimeInterval(-3 * day), notes: "Kouign-amann is a must."),
+                  lastVisited: now.addingTimeInterval(-3 * day), notes: "Kouign-amann is a must.",
+                  coordinate: .init(latitude: 1.2847, longitude: 103.8327)),
             Place(name: "Common Man Coffee", category: .cafe, rating: 4.3, priceLevel: 2,
-                  lastVisited: now.addingTimeInterval(-10 * day)),
+                  lastVisited: now.addingTimeInterval(-10 * day),
+                  coordinate: .init(latitude: 1.2905, longitude: 103.8404)),
             Place(name: "Maxwell Chicken Rice", category: .hawker, rating: 4.7, priceLevel: 1,
-                  lastVisited: now.addingTimeInterval(-1 * day), notes: "Go before 11am."),
+                  lastVisited: now.addingTimeInterval(-1 * day), notes: "Go before 11am.",
+                  coordinate: .init(latitude: 1.2803, longitude: 103.8448)),
             Place(name: "Burnt Ends", category: .restaurant, rating: 4.8, priceLevel: 4,
-                  lastVisited: now.addingTimeInterval(-45 * day)),
+                  lastVisited: now.addingTimeInterval(-45 * day),
+                  coordinate: .init(latitude: 1.3051, longitude: 103.8105)),
             Place(name: "Native", category: .bar, rating: 4.4, priceLevel: 3,
-                  lastVisited: now.addingTimeInterval(-20 * day))
+                  lastVisited: now.addingTimeInterval(-20 * day),
+                  coordinate: .init(latitude: 1.2812, longitude: 103.8478))
         ]
     }
 }

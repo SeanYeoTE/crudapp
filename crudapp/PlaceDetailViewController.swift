@@ -1,4 +1,5 @@
 import UIKit
+import MapKit
 
 class PlaceDetailViewController: UITableViewController {
     
@@ -49,12 +50,45 @@ class PlaceDetailViewController: UITableViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
+    private func makeMapHeader(for coordinate: CLLocationCoordinate2D) -> UIView {
+        let container = UIView(frame: CGRect(x: 0, y: 0, width: 0, height: 200))
+        container.preservesSuperviewLayoutMargins = true
+
+        let mapView = MKMapView()
+        mapView.translatesAutoresizingMaskIntoConstraints = false
+        mapView.layer.cornerRadius = 12
+        mapView.isScrollEnabled = false
+        mapView.isZoomEnabled = false
+        mapView.setRegion(MKCoordinateRegion(center: coordinate,
+                                             latitudinalMeters: 500,
+                                             longitudinalMeters: 500),
+                          animated: false)
+        
+        let pin = MKPointAnnotation()
+        pin.coordinate = coordinate
+        pin.title = place.name
+        mapView.addAnnotation(pin)
+        
+        container.addSubview(mapView)
+        NSLayoutConstraint.activate([
+            mapView.topAnchor.constraint(equalTo: container.topAnchor, constant: 16),
+            mapView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+            mapView.leadingAnchor.constraint(equalTo: container.layoutMarginsGuide.leadingAnchor),
+            mapView.trailingAnchor.constraint(equalTo: container.layoutMarginsGuide.trailingAnchor)
+        ])
+        return container
+    }
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         title = place.name
         
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "DetailCell")
         tableView.allowsSelection = false
+        if let coordinate = place.coordinate {
+            tableView.tableHeaderView = makeMapHeader(for: coordinate)
+        }
         navigationItem.rightBarButtonItem = UIBarButtonItem(
             systemItem: .edit,
             primaryAction: UIAction { [ weak self ] _ in

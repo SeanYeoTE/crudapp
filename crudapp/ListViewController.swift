@@ -10,8 +10,7 @@ import UIKit
 class ListViewController: UITableViewController {
 
     private var places: [Place] = Place.sampleData()
-    private let cellid = "PlaceCell"
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "My Places"
@@ -42,7 +41,24 @@ class ListViewController: UITableViewController {
         navigationController?.pushViewController(detailVC, animated: true)
     }
 
+    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        UITableView.automaticDimension
+    }
 
+    override func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+        64
+    }
+
+    // MARK: - Delete
+
+    override func tableView(_ tableView: UITableView,
+                            commit editingStyle: UITableViewCell.EditingStyle,
+                            forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            places.remove(at: indexPath.row)
+            tableView.deleteRows(at: [indexPath], with: .fade)
+        }
+    }
 
 }
 
