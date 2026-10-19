@@ -16,5 +16,14 @@ class PlaceFormViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = place == nil ? "New Place" : "Edit Place"
+
+        if place == nil {
+            navigationItem.leftBarButtonItem = UIBarButtonItem(
+                systemItem: .cancel, 
+                primaryAction: UIAction { [ weak self] _ in
+                self?.dismiss(animated: true)
+                }
+            )
+        }
     }
 }

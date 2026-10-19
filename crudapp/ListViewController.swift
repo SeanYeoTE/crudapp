@@ -16,6 +16,12 @@ class ListViewController: UITableViewController {
         super.viewDidLoad()
         title = "My Places"
         navigationController?.navigationBar.prefersLargeTitles = true
+        navigationItem.rightBarButtonItem = UIBarButtonItem(
+            systemItem: .add,
+            primaryAction: UIAction { [weak self]  _ in
+            let formVC = PlaceFormViewController()
+            self?.present(UINavigationController(rootViewController: formVC), animated: true)}
+        )
         tableView.register(PlaceTableCell.self, forCellReuseIdentifier: PlaceTableCell.identifier)
     }
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
