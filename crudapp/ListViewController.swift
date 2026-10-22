@@ -17,12 +17,20 @@ class ListViewController: UITableViewController {
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.rightBarButtonItem = UIBarButtonItem(
             systemItem: .add,
-            primaryAction: UIAction { [weak self]  _ in
-            let formVC = PlaceFormViewController()
-            self?.present(UINavigationController(rootViewController: formVC), animated: true)}
+            primaryAction: UIAction { [weak self] _ in
+                let formVC = PlaceFormViewController()
+                formVC.delegate = self
+                self?.present(UINavigationController(rootViewController: formVC), animated: true)
+            }
         )
         tableView.register(PlaceTableCell.self, forCellReuseIdentifier: PlaceTableCell.identifier)
     }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        tableView.reloadData()
+    }
+
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         places.count
     }
@@ -59,7 +67,15 @@ class ListViewController: UITableViewController {
             tableView.deleteRows(at: [indexPath], with: .fade)
         }
     }
+}
 
+// MARK: - PlaceFormViewControllerDelegate
+
+extension ListViewController: PlaceFormViewControllerDelegate {
+    func didAddPlace(_ place: Place) {
+        places.append(place)
+        tableView.reloadData()
+    }
 }
 
 

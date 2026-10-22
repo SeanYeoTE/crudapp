@@ -94,6 +94,7 @@ class PlaceDetailViewController: UITableViewController {
             primaryAction: UIAction { [ weak self ] _ in
                 guard let self else { return }
                 let formVC = PlaceFormViewController(place: self.place)
+                formVC.delegate = self
                 self.present(UINavigationController(rootViewController: formVC), animated: true)
             }
         )
@@ -132,6 +133,18 @@ class PlaceDetailViewController: UITableViewController {
             cell.contentConfiguration = content
         }
         return cell
-        
+
+    }
+}
+
+// MARK: - PlaceFormViewControllerDelegate
+
+extension PlaceDetailViewController: PlaceFormViewControllerDelegate {
+    func didUpdatePlace(_ place: Place) {
+        title = place.name
+        tableView.reloadData()
+        if let coordinate = place.coordinate {
+            tableView.tableHeaderView = makeMapHeader(for: coordinate)
+        }
     }
 }
