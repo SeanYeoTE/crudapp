@@ -8,9 +8,40 @@
 import UIKit
 
 class ListViewController: UITableViewController {
+    nonisolated enum Section: Hashable { case main }
+    private var scopeTitles: [String] =
+        ["All"] + PlaceCategory.allCases.map { $0.rawValue.capitalized }
 
-    private var places: [Place] = Place.sampleData()
-    
+    private let store = PlaceDataStore.shared
+    private var places: [Place] { store.places }
+    private var dataSource: UITableViewDiffableDataSource<Section, Place>!
+    typealias DataSource = UITableViewDiffableDataSource<Section, Place>
+
+    private let searchController = UISearchController(
+        searchResultsController: nil
+    )
+    private func filteredPlaces(for searchText: String?) -> [Place] {
+        let scopeIndex = searchController.searchBar.selectedScopeButtonIndex
+        let scopedPlaces =
+            scopeIndex == 0
+            ? places  // "All"
+            : places.filter {
+                $0.category == PlaceCategory.allCases[scopeIndex - 1]
+            }
+
+        guard let searchText = searchText?.lowercased(), !searchText.isEmpty
+        else {
+            return scopedPlaces
+        }
+        return scopedPlaces.filter { $0.name.lowercased().contains(searchText) }
+    }
+
+    private var isSearching: Bool {
+        let hasText = !(searchController.searchBar.text?.isEmpty ?? true)
+        let hasScope = searchController.searchBar.selectedScopeButtonIndex != 0  // not "All"
+        return searchController.isActive && (hasText || hasScope)
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "My Places"
@@ -20,68 +51,183 @@ class ListViewController: UITableViewController {
             primaryAction: UIAction { [weak self] _ in
                 let formVC = PlaceFormViewController()
                 formVC.delegate = self
-                self?.present(UINavigationController(rootViewController: formVC), animated: true)
+                self?.present(
+                    UINavigationController(rootViewController: formVC),
+                    animated: true
+                )
             }
         )
-        tableView.register(PlaceTableCell.self, forCellReuseIdentifier: PlaceTableCell.identifier)
+
+        setupTable()
+        setupSearchBar()
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        tableView.reloadData()
+        applySnapshot(animatingDifferences: false)
     }
 
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        places.count
-    }
-    override func tableView(_ tableView: UITableView,
-                            cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: PlaceTableCell.identifier, for: indexPath) as! PlaceTableCell
-        cell.place = places[indexPath.row]
-        return cell
+    private func setupTable() {
+        tableView.register(
+            PlaceTableCell.self,
+            forCellReuseIdentifier: PlaceTableCell.identifier
+        )
+
+        dataSource = UITableViewDiffableDataSource<Section, Place>(
+            tableView: tableView
+        ) { tableView, indexPath, item in
+            guard
+                let cell = tableView.dequeueReusableCell(
+                    withIdentifier: PlaceTableCell.identifier,
+                    for: indexPath
+                ) as? PlaceTableCell
+            else {
+                return UITableViewCell()
+            }
+            cell.configure(with: item)
+            return cell
+        }
+
+        dataSource.defaultRowAnimation = .fade
+        tableView.dataSource = dataSource
+        tableView.delegate = self
     }
 
-  // MARK: - UITableViewDelegate
+    private func setupSearchBar() {
+        searchController.searchResultsUpdater = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = "Search Places"
+        searchController.searchBar.scopeButtonTitles = scopeTitles
+        searchController.searchBar.delegate = self
+        navigationItem.searchController = searchController
+        definesPresentationContext = true
+    }
 
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    private func applySnapshot(animatingDifferences: Bool = true) {
+        var snapshot = NSDiffableDataSourceSnapshot<Section, Place>()
+        let current =
+            isSearching
+            ? filteredPlaces(for: searchController.searchBar.text) : places
+        snapshot.appendSections([.main])
+        snapshot.appendItems(current, toSection: .main)
+        dataSource.apply(snapshot, animatingDifferences: animatingDifferences)
+        updateBackgroundMessage()
+    }
+
+    private func updateBackgroundMessage() {
+        let label = UILabel()
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        if places.isEmpty {
+            label.text = "No items yet. Tap + to add one."
+        } else if isSearching
+            && filteredPlaces(for: searchController.searchBar.text).isEmpty
+        {
+            label.text = "No results."
+        } else {
+            tableView.backgroundView = nil
+            return
+        }
+        tableView.backgroundView = label
+    }
+
+    // MARK: - UITableViewDelegate
+
+    override func tableView(
+        _ tableView: UITableView,
+        didSelectRowAt indexPath: IndexPath
+    ) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let detailVC = PlaceDetailViewController(place: places[indexPath.row])
+        let detailVC = PlaceDetailViewController(
+            place: isSearching
+                ? filteredPlaces(for: searchController.searchBar.text)[
+                    indexPath.row
+                ] : places[indexPath.row]
+        )
+        detailVC.delegate = self
         navigationController?.pushViewController(detailVC, animated: true)
     }
 
-    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+    override func tableView(
+        _ tableView: UITableView,
+        heightForRowAt indexPath: IndexPath
+    ) -> CGFloat {
         UITableView.automaticDimension
     }
 
-    override func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+    override func tableView(
+        _ tableView: UITableView,
+        estimatedHeightForRowAt indexPath: IndexPath
+    ) -> CGFloat {
         64
     }
 
-    // MARK: - Delete
+    override func tableView(
+        _ tableView: UITableView,
+        trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath
+    )
+        -> UISwipeActionsConfiguration?
+    {
+        guard let place = dataSource.itemIdentifier(for: indexPath) else {
+            return nil
+        }
 
-    override func tableView(_ tableView: UITableView,
-                            commit editingStyle: UITableViewCell.EditingStyle,
-                            forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete {
-            places.remove(at: indexPath.row)
-            tableView.deleteRows(at: [indexPath], with: .fade)
+        let delete = UIContextualAction(style: .destructive, title: "Delete") {
+            _,
+            _,
+            done in
+            do {
+                try self.store.deletePlace(place)
+                self.applySnapshot()
+            } catch {
+                print("Failed to delete place: \(error)")
+            }
+            done(true)
+        }
+
+        return UISwipeActionsConfiguration(actions: [delete])
+    }
+}
+
+// MARK: - PlaceFormViewControllerDelegate, PlaceDetailViewControllerDelegate
+
+extension ListViewController: PlaceFormViewControllerDelegate,
+    PlaceDetailViewControllerDelegate
+{
+    func didAddPlace(_ place: Place) {
+        do {
+            try store.addPlace(place)
+            applySnapshot()
+        } catch {
+            print("Failed to add place: \(error)")
+        }
+    }
+
+    func didUpdatePlace(_ place: Place) {
+        do {
+            try store.updatePlace(place)
+            applySnapshot()
+        } catch {
+            print("Failed to update place: \(error)")
         }
     }
 }
 
-// MARK: - PlaceFormViewControllerDelegate
+// MARK: - UISearchBarDelegate
 
-extension ListViewController: PlaceFormViewControllerDelegate {
-    func didAddPlace(_ place: Place) {
-        places.append(place)
-        tableView.reloadData()
+extension ListViewController: UISearchResultsUpdating, UISearchBarDelegate {
+    func updateSearchResults(for searchController: UISearchController) {
+        applySnapshot()
+    }
+
+    func searchBar(
+        _ searchBar: UISearchBar,
+        selectedScopeButtonIndexDidChange selectedScope: Int
+    ) {
+        applySnapshot()
     }
 }
-
-
-
 
 #Preview {
     UINavigationController(rootViewController: ListViewController())
 }
-

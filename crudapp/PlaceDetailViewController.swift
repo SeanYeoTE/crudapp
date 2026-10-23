@@ -1,7 +1,12 @@
 import UIKit
 import MapKit
 
+protocol PlaceDetailViewControllerDelegate {
+    func didUpdatePlace(_ place: Place)
+}
+
 class PlaceDetailViewController: UITableViewController {
+    weak var delegate: PlaceFormViewControllerDelegate?
     
     var place: Place
     
@@ -142,6 +147,8 @@ class PlaceDetailViewController: UITableViewController {
 extension PlaceDetailViewController: PlaceFormViewControllerDelegate {
     func didUpdatePlace(_ place: Place) {
         title = place.name
+        self.place = place
+        delegate?.didUpdatePlace(place)
         tableView.reloadData()
         if let coordinate = place.coordinate {
             tableView.tableHeaderView = makeMapHeader(for: coordinate)
