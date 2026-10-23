@@ -1,0 +1,20 @@
+crudapp/ListViewController.swift
+  h_36695e5767c2ad 10,49,80-86
+crudapp/Place.swift
+  h_36695e5767c2ad 27,84
+crudapp/PlaceDetailViewController.swift
+  h_36695e5767c2ad 4-7,9,150-151
+crudapp/PlaceFormViewController.swift
+  h_36695e5767c2ad 175-184
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2e0fb1d949c53c7155d0eaf13860f246c9615893",
+  "prompts": {},
+  "humans": {
+    "h_36695e5767c2ad": {
+      "author": "Nicholas Lim <nic.lim@foodpanda.com>"
+    }
+  }
+}
