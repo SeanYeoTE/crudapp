@@ -81,7 +81,12 @@ class ListViewController: UITableViewController, PlaceDetailViewControllerDelega
 
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let detailVC = PlaceDetailViewController(place: places[indexPath.row])
+        let detailVC = PlaceDetailViewController(
+            place: isSearching
+                ? filteredPlaces(for: searchController.searchBar.text)[
+                    indexPath.row
+                ] : places[indexPath.row]
+        )
         detailVC.delegate = self
         navigationController?.pushViewController(detailVC, animated: true)
     }
