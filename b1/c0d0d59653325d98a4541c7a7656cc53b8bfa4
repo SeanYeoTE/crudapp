@@ -1,0 +1,18 @@
+crudapp/ListViewController.swift
+  h_36695e5767c2ad 11-12,15-16,31-45,50,53-57,80-84,86-87,91,93-94,104,113
+crudapp/Place.swift
+  h_36695e5767c2ad 32,98-106
+crudapp/PlaceTableCell.swift
+  h_36695e5767c2ad 7,17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b1c0d0d59653325d98a4541c7a7656cc53b8bfa4",
+  "prompts": {},
+  "humans": {
+    "h_36695e5767c2ad": {
+      "author": "Nicholas Lim <nic.lim@foodpanda.com>"
+    }
+  }
+}
