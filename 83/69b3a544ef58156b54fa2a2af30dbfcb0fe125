@@ -1,0 +1,25 @@
+crudapp/PlaceDataStore.swift
+  s_f9f58b722b87b8::t_64f789fe1b3436 59-60,66-67
+  s_f9f58b722b87b8::t_7517cbab73e800 11,13,15-24,32,41-42,44,47-51,54-58,63-65,70
+  s_f9f58b722b87b8::t_da401436d37bc5 71-73
+crudapp/ListViewController.swift
+  s_f9f58b722b87b8::t_c109c9c1025226 67-72,81-86,88,90-91,93-94
+  s_f9f58b722b87b8::t_544a20c0d23669 12
+  s_f9f58b722b87b8::t_18561fb50ed0ca 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8369b3a544ef58156b54fa2a2af30dbfcb0fe125",
+  "prompts": {},
+  "sessions": {
+    "s_f9f58b722b87b8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bab64f20-d795-40ed-a5a1-1c02fbd3c1f3",
+        "model": "claude-haiku-5-5"
+      },
+      "human_author": "Nicholas Lim <nic.lim@foodpanda.com>"
+    }
+  }
+}
