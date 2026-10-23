@@ -7,23 +7,30 @@
 
 import UIKit
 
-class ListViewController: UITableViewController, PlaceDetailViewControllerDelegate {
+class ListViewController: UITableViewController {
     nonisolated enum Section: Hashable { case main }
-    private var scopeTitles: [String] = ["All"] + PlaceCategory.allCases.map { $0.rawValue.capitalized }
+    private var scopeTitles: [String] =
+        ["All"] + PlaceCategory.allCases.map { $0.rawValue.capitalized }
 
     private let store = PlaceDataStore.shared
     private var places: [Place] { store.places }
     private var dataSource: UITableViewDiffableDataSource<Section, Place>!
     typealias DataSource = UITableViewDiffableDataSource<Section, Place>
-    
-    private let searchController = UISearchController(searchResultsController: nil)
+
+    private let searchController = UISearchController(
+        searchResultsController: nil
+    )
     private func filteredPlaces(for searchText: String?) -> [Place] {
         let scopeIndex = searchController.searchBar.selectedScopeButtonIndex
-        let scopedPlaces = scopeIndex == 0
-            ? places // "All"
-            : places.filter { $0.category == PlaceCategory.allCases[scopeIndex - 1] }
+        let scopedPlaces =
+            scopeIndex == 0
+            ? places  // "All"
+            : places.filter {
+                $0.category == PlaceCategory.allCases[scopeIndex - 1]
+            }
 
-        guard let searchText = searchText?.lowercased(), !searchText.isEmpty else {
+        guard let searchText = searchText?.lowercased(), !searchText.isEmpty
+        else {
             return scopedPlaces
         }
         return scopedPlaces.filter { $0.name.lowercased().contains(searchText) }
@@ -31,7 +38,7 @@ class ListViewController: UITableViewController, PlaceDetailViewControllerDelega
 
     private var isSearching: Bool {
         let hasText = !(searchController.searchBar.text?.isEmpty ?? true)
-        let hasScope = searchController.searchBar.selectedScopeButtonIndex != 0 // not "All"
+        let hasScope = searchController.searchBar.selectedScopeButtonIndex != 0  // not "All"
         return searchController.isActive && (hasText || hasScope)
     }
 
@@ -44,16 +51,37 @@ class ListViewController: UITableViewController, PlaceDetailViewControllerDelega
             primaryAction: UIAction { [weak self] _ in
                 let formVC = PlaceFormViewController()
                 formVC.delegate = self
-                self?.present(UINavigationController(rootViewController: formVC), animated: true)
+                self?.present(
+                    UINavigationController(rootViewController: formVC),
+                    animated: true
+                )
             }
         )
-        tableView.register(PlaceTableCell.self, forCellReuseIdentifier: PlaceTableCell.identifier)
 
-        dataSource = UITableViewDiffableDataSource<Section, Place>( tableView: tableView) { tableView, indexPath, item in
-            guard let cell = tableView.dequeueReusableCell(
-                withIdentifier: PlaceTableCell.identifier,
-                for: indexPath
-            ) as? PlaceTableCell else {
+        setupTable()
+        setupSearchBar()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        applySnapshot(animatingDifferences: false)
+    }
+
+    private func setupTable() {
+        tableView.register(
+            PlaceTableCell.self,
+            forCellReuseIdentifier: PlaceTableCell.identifier
+        )
+
+        dataSource = UITableViewDiffableDataSource<Section, Place>(
+            tableView: tableView
+        ) { tableView, indexPath, item in
+            guard
+                let cell = tableView.dequeueReusableCell(
+                    withIdentifier: PlaceTableCell.identifier,
+                    for: indexPath
+                ) as? PlaceTableCell
+            else {
                 return UITableViewCell()
             }
             cell.configure(with: item)
@@ -63,7 +91,9 @@ class ListViewController: UITableViewController, PlaceDetailViewControllerDelega
         dataSource.defaultRowAnimation = .fade
         tableView.dataSource = dataSource
         tableView.delegate = self
+    }
 
+    private func setupSearchBar() {
         searchController.searchResultsUpdater = self
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.searchBar.placeholder = "Search Places"
@@ -73,23 +103,40 @@ class ListViewController: UITableViewController, PlaceDetailViewControllerDelega
         definesPresentationContext = true
     }
 
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        applySnapshot(animatingDifferences: false)
-    }
-
     private func applySnapshot(animatingDifferences: Bool = true) {
         var snapshot = NSDiffableDataSourceSnapshot<Section, Place>()
-        let current = isSearching ? filteredPlaces(for: searchController.searchBar.text) : places
+        let current =
+            isSearching
+            ? filteredPlaces(for: searchController.searchBar.text) : places
         snapshot.appendSections([.main])
         snapshot.appendItems(current, toSection: .main)
         dataSource.apply(snapshot, animatingDifferences: animatingDifferences)
         updateBackgroundMessage()
     }
 
-  // MARK: - UITableViewDelegate
+    private func updateBackgroundMessage() {
+        let label = UILabel()
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        if places.isEmpty {
+            label.text = "No items yet. Tap + to add one."
+        } else if isSearching
+            && filteredPlaces(for: searchController.searchBar.text).isEmpty
+        {
+            label.text = "No results."
+        } else {
+            tableView.backgroundView = nil
+            return
+        }
+        tableView.backgroundView = label
+    }
 
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    // MARK: - UITableViewDelegate
+
+    override func tableView(
+        _ tableView: UITableView,
+        didSelectRowAt indexPath: IndexPath
+    ) {
         tableView.deselectRow(at: indexPath, animated: true)
         let detailVC = PlaceDetailViewController(
             place: isSearching
@@ -101,22 +148,34 @@ class ListViewController: UITableViewController, PlaceDetailViewControllerDelega
         navigationController?.pushViewController(detailVC, animated: true)
     }
 
-    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+    override func tableView(
+        _ tableView: UITableView,
+        heightForRowAt indexPath: IndexPath
+    ) -> CGFloat {
         UITableView.automaticDimension
     }
 
-    override func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+    override func tableView(
+        _ tableView: UITableView,
+        estimatedHeightForRowAt indexPath: IndexPath
+    ) -> CGFloat {
         64
     }
 
-    // MARK: - Delete
+    override func tableView(
+        _ tableView: UITableView,
+        trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath
+    )
+        -> UISwipeActionsConfiguration?
+    {
+        guard let place = dataSource.itemIdentifier(for: indexPath) else {
+            return nil
+        }
 
-    override func tableView(_ tableView: UITableView,
-                   trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath)
-    -> UISwipeActionsConfiguration? {
-        guard let place = dataSource.itemIdentifier(for: indexPath) else { return nil }
-
-        let delete = UIContextualAction(style: .destructive, title: "Delete") { _,_,done in
+        let delete = UIContextualAction(style: .destructive, title: "Delete") {
+            _,
+            _,
+            done in
             do {
                 try self.store.deletePlace(place)
                 self.applySnapshot()
@@ -128,26 +187,13 @@ class ListViewController: UITableViewController, PlaceDetailViewControllerDelega
 
         return UISwipeActionsConfiguration(actions: [delete])
     }
-    
-    private func updateBackgroundMessage() {
-        let label = UILabel()
-        label.textAlignment = .center
-        label.numberOfLines = 0
-        if places.isEmpty {
-            label.text = "No items yet. Tap + to add one."
-        } else if isSearching && filteredPlaces(for: searchController.searchBar.text).isEmpty {
-            label.text = "No results."
-        } else {
-            tableView.backgroundView = nil
-            return
-        }
-        tableView.backgroundView = label
-    }
 }
 
-// MARK: - PlaceFormViewControllerDelegate
+// MARK: - PlaceFormViewControllerDelegate, PlaceDetailViewControllerDelegate
 
-extension ListViewController: PlaceFormViewControllerDelegate {
+extension ListViewController: PlaceFormViewControllerDelegate,
+    PlaceDetailViewControllerDelegate
+{
     func didAddPlace(_ place: Place) {
         do {
             try store.addPlace(place)
@@ -173,14 +219,15 @@ extension ListViewController: UISearchResultsUpdating, UISearchBarDelegate {
     func updateSearchResults(for searchController: UISearchController) {
         applySnapshot()
     }
-    
-    func searchBar(_ searchBar: UISearchBar, selectedScopeButtonIndexDidChange selectedScope: Int) {
-        applySnapshot()
-     }
-}
 
+    func searchBar(
+        _ searchBar: UISearchBar,
+        selectedScopeButtonIndexDidChange selectedScope: Int
+    ) {
+        applySnapshot()
+    }
+}
 
 #Preview {
     UINavigationController(rootViewController: ListViewController())
 }
-
