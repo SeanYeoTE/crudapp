@@ -1,0 +1,14 @@
+crudapp/ListViewController.swift
+  h_36695e5767c2ad 77,116-130
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b82948ca6cc6cd4d1680069b7726824f90a68f4d",
+  "prompts": {},
+  "humans": {
+    "h_36695e5767c2ad": {
+      "author": "Nicholas Lim <nic.lim@foodpanda.com>"
+    }
+  }
+}
