@@ -172,13 +172,16 @@ class PlaceFormViewController: UITableViewController {
 
         if let place {
             // Editing: mutate the shared instance directly (pass by reference).
-            place.name = name
-            place.category = category
-            place.rating = ratingStepper.value
-            place.priceLevel = Int(priceStepper.value)
-            place.lastVisited = datePicker.date
-            place.notes = notes
-            delegate?.didUpdatePlace(place)
+            let updatedPlace = Place(
+                id: place.id,
+                name: name,
+                category: category,
+                rating: ratingStepper.value,
+                priceLevel: Int(priceStepper.value),
+                lastVisited: datePicker.date,
+                notes: notes
+            )
+            delegate?.didUpdatePlace(updatedPlace)
         } else {
             let newPlace = Place(name: name,
                                  category: category,

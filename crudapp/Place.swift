@@ -24,7 +24,7 @@ enum PlaceCategory: String, CaseIterable {
 /// The "Item" for this CRUD app.
 /// A class (reference type) so that every screen editing a Place
 /// mutates the same instance — pass by reference.
-class Place {
+struct Place: Identifiable {
     let id: UUID
     var name: String              // String
     var category: PlaceCategory   // enum

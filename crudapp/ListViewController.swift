@@ -7,7 +7,7 @@
 
 import UIKit
 
-class ListViewController: UITableViewController {
+class ListViewController: UITableViewController, PlaceDetailViewControllerDelegate {
 
     private var places: [Place] = Place.sampleData()
     
@@ -46,6 +46,7 @@ class ListViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let detailVC = PlaceDetailViewController(place: places[indexPath.row])
+        detailVC.delegate = self
         navigationController?.pushViewController(detailVC, animated: true)
     }
 
@@ -75,6 +76,13 @@ extension ListViewController: PlaceFormViewControllerDelegate {
     func didAddPlace(_ place: Place) {
         places.append(place)
         tableView.reloadData()
+    }
+    
+    func didUpdatePlace(_ place: Place) {
+        if let index = places.firstIndex(where: { $0.id == place.id }) {
+            places[index] = place  // replace old struct with new one
+            tableView.reloadData()
+        }
     }
 }
 
