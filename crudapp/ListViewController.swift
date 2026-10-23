@@ -8,9 +8,9 @@
 import UIKit
 
 class ListViewController: UITableViewController, PlaceDetailViewControllerDelegate {
+    private let store = PlaceDataStore.shared
+    private var places: [Place] { store.places }
 
-    private var places: [Place] = Place.sampleData()
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "My Places"
@@ -64,8 +64,12 @@ class ListViewController: UITableViewController, PlaceDetailViewControllerDelega
                             commit editingStyle: UITableViewCell.EditingStyle,
                             forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
-            places.remove(at: indexPath.row)
-            tableView.deleteRows(at: [indexPath], with: .fade)
+            do {
+                try store.deletePlace(at: indexPath.row)
+                tableView.deleteRows(at: [indexPath], with: .fade)
+            } catch {
+                print("Failed to delete place: \(error)")
+            }
         }
     }
 }
@@ -74,14 +78,20 @@ class ListViewController: UITableViewController, PlaceDetailViewControllerDelega
 
 extension ListViewController: PlaceFormViewControllerDelegate {
     func didAddPlace(_ place: Place) {
-        places.append(place)
-        tableView.reloadData()
-    }
-    
-    func didUpdatePlace(_ place: Place) {
-        if let index = places.firstIndex(where: { $0.id == place.id }) {
-            places[index] = place  // replace old struct with new one
+        do {
+            try store.addPlace(place)
             tableView.reloadData()
+        } catch {
+            print("Failed to add place: \(error)")
+        }
+    }
+
+    func didUpdatePlace(_ place: Place) {
+        do {
+            try store.updatePlace(place)
+            tableView.reloadData()
+        } catch {
+            print("Failed to update place: \(error)")
         }
     }
 }

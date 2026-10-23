@@ -8,12 +8,20 @@
 import Foundation
 
 class PlaceDataStore {
-    static let shared = PlaceDataStore()  // 1. singleton
-    private var places: [Place] = []
+    static let shared = PlaceDataStore()
 
-    private init() {}
+    private(set) var places: [Place]
 
-    private var fileURL: URL {
+    private init() {
+        if FileManager.default.fileExists(atPath: Self.fileURL.path) {
+            places = PlaceDataStore.load()
+        } else {
+            places = Place.sampleData()
+            try? save(places)
+        }
+    }
+
+    private static var fileURL: URL {
         let documentsPath = FileManager.default.urls(
             for: .documentDirectory,
             in: .userDomainMask
@@ -21,7 +29,7 @@ class PlaceDataStore {
         return documentsPath.appendingPathComponent("places.json")
     }
 
-    func loadPlaces() -> [Place] {
+    private static func load() -> [Place] {
         guard let data = try? Data(contentsOf: fileURL),
             let places = try? JSONDecoder().decode([Place].self, from: data)
         else {
@@ -30,27 +38,39 @@ class PlaceDataStore {
         return places
     }
 
-    func savePlaces(_ places: [Place]) throws {
-        // 2. try? without error handling
+    /// Writes `places` to disk. Throws on failure so callers can react.
+    private func save(_ places: [Place]) throws {
         let data = try JSONEncoder().encode(places)
-        try data.write(to: fileURL)
+        try data.write(to: Self.fileURL, options: .atomic)
     }
 
-    func addPlace(_ place: Place) {
-        places.append(place)
+    func addPlace(_ place: Place) throws {
+        var updated = places
+        updated.append(place)
+        try save(updated)
+        places = updated
     }
 
-    func updatePlace(_ place: Place) {
-        if let index = places.firstIndex(where: { $0.id == place.id }) {
-            places[index] = place  // replace old struct with new one
-        }
+    func updatePlace(_ place: Place) throws {
+        var updated = places
+        guard let index = updated.firstIndex(where: { $0.id == place.id })
+        else { return }
+        updated[index] = place
+        try save(updated)
+        places = updated
     }
 
-    func deletePlace(_ place: Place) {
-        places.removeAll(where: { $0.id == place.id })
+    func deletePlace(_ place: Place) throws {
+        var updated = places
+        updated.removeAll(where: { $0.id == place.id })
+        try save(updated)
+        places = updated
     }
 
-    func deletePlace(at index: Int) {
-        places.remove(at: index)
+    func deletePlace(at index: Int) throws {
+        var updated = places
+        updated.remove(at: index)
+        try save(updated)
+        places = updated
     }
 }
