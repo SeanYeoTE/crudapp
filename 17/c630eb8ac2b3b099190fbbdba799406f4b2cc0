@@ -1,0 +1,22 @@
+crudapp/Place.swift
+  s_339eeea87ac542::t_53ac677e0e75dd 94-96
+  s_339eeea87ac542::t_3fbbf30283ccfb 80-81
+  s_339eeea87ac542::t_6acdaffb40e735 77-79
+  s_339eeea87ac542::t_895621690dc1c4 82-84,91-93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "17c630eb8ac2b3b099190fbbdba799406f4b2cc0",
+  "prompts": {},
+  "sessions": {
+    "s_339eeea87ac542": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d554a8bf-a295-4c3a-bca5-349afbe58878",
+        "model": "claude-haiku-5-5"
+      },
+      "human_author": "Nicholas Lim <nic.lim@foodpanda.com>"
+    }
+  }
+}
