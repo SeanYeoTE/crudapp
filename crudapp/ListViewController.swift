@@ -9,6 +9,7 @@ import UIKit
 
 class ListViewController: UITableViewController, PlaceDetailViewControllerDelegate {
     nonisolated enum Section: Hashable { case main }
+    private var scopeTitles: [String] = ["All"] + PlaceCategory.allCases.map { $0.rawValue.capitalized }
 
     private let store = PlaceDataStore.shared
     private var places: [Place] { store.places }
@@ -17,14 +18,21 @@ class ListViewController: UITableViewController, PlaceDetailViewControllerDelega
     
     private let searchController = UISearchController(searchResultsController: nil)
     private func filteredPlaces(for searchText: String?) -> [Place] {
+        let scopeIndex = searchController.searchBar.selectedScopeButtonIndex
+        let scopedPlaces = scopeIndex == 0
+            ? places // "All"
+            : places.filter { $0.category == PlaceCategory.allCases[scopeIndex - 1] }
+
         guard let searchText = searchText?.lowercased(), !searchText.isEmpty else {
-            return places
+            return scopedPlaces
         }
-        return places.filter { $0.name.lowercased().contains(searchText) }
+        return scopedPlaces.filter { $0.name.lowercased().contains(searchText) }
     }
 
     private var isSearching: Bool {
-        searchController.isActive && !(searchController.searchBar.text?.isEmpty ?? true)
+        let hasText = !(searchController.searchBar.text?.isEmpty ?? true)
+        let hasScope = searchController.searchBar.selectedScopeButtonIndex != 0 // not "All"
+        return searchController.isActive && (hasText || hasScope)
     }
 
     override func viewDidLoad() {
@@ -59,6 +67,8 @@ class ListViewController: UITableViewController, PlaceDetailViewControllerDelega
         searchController.searchResultsUpdater = self
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.searchBar.placeholder = "Search Places"
+        searchController.searchBar.scopeButtonTitles = scopeTitles
+        searchController.searchBar.delegate = self
         navigationItem.searchController = searchController
         definesPresentationContext = true
     }
@@ -157,10 +167,16 @@ extension ListViewController: PlaceFormViewControllerDelegate {
     }
 }
 
-extension ListViewController: UISearchResultsUpdating {
+// MARK: - UISearchBarDelegate
+
+extension ListViewController: UISearchResultsUpdating, UISearchBarDelegate {
     func updateSearchResults(for searchController: UISearchController) {
         applySnapshot()
     }
+    
+    func searchBar(_ searchBar: UISearchBar, selectedScopeButtonIndexDidChange selectedScope: Int) {
+        applySnapshot()
+     }
 }
 
 
