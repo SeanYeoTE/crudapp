@@ -1,0 +1,20 @@
+crudapp/ListViewController.swift
+  s_420de04bcf5c08::t_c8357ae8f698f3 21-25,27,29
+  s_420de04bcf5c08::t_8326487801cd77 12,33-35,70-71,170-172,176-179
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fb6c767c08053e90053a9b67df1685d0128ab461",
+  "prompts": {},
+  "sessions": {
+    "s_420de04bcf5c08": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "19fe3907-7469-424e-8ac4-77ced02c6f2d",
+        "model": "claude-haiku-5-5"
+      },
+      "human_author": "Nicholas Lim <nic.lim@foodpanda.com>"
+    }
+  }
+}
