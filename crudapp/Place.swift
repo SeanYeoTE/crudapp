@@ -2,7 +2,7 @@ import Foundation
 import CoreLocation
 
 /// The kind of place. Backed by String so it's easy to display and (later) encode.
-enum PlaceCategory: String, CaseIterable {
+enum PlaceCategory: String, CaseIterable, Codable {
     case restaurant = "Restaurant"
     case cafe = "Café"
     case bakery = "Bakery"
@@ -21,10 +21,15 @@ enum PlaceCategory: String, CaseIterable {
     }
 }
 
+private struct StoredCoordinate: Codable {
+    let latitude: Double
+    let longitude: Double
+}
+
 /// The "Item" for this CRUD app.
 /// A class (reference type) so that every screen editing a Place
 /// mutates the same instance — pass by reference.
-struct Place: Identifiable {
+struct Place: Identifiable, Codable {
     let id: UUID
     var name: String              // String
     var category: PlaceCategory   // enum
@@ -33,6 +38,15 @@ struct Place: Identifiable {
     var lastVisited: Date         // Date
     var notes: String
     var coordinate: CLLocationCoordinate2D?
+    
+    /// "$$" style string for display.
+    var priceString: String {
+        String(repeating: "$", count: priceLevel)
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, category, rating, priceLevel, lastVisited, notes, coordinate
+    }
 
     init(id: UUID = UUID(),
          name: String,
@@ -52,9 +66,34 @@ struct Place: Identifiable {
         self.coordinate = coordinate
     }
 
-    /// "$$" style string for display.
-    var priceString: String {
-        String(repeating: "$", count: priceLevel)
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        category = try container.decode(PlaceCategory.self, forKey: .category)
+        rating = try container.decode(Double.self, forKey: .rating)
+        priceLevel = try container.decode(Int.self, forKey: .priceLevel)
+        lastVisited = try container.decode(Date.self, forKey: .lastVisited)
+        notes = try container.decode(String.self, forKey: .notes)
+
+        let stored = try container.decodeIfPresent(StoredCoordinate.self, forKey: .coordinate)
+        coordinate = stored.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(category, forKey: .category)
+        try container.encode(rating, forKey: .rating)
+        try container.encode(priceLevel, forKey: .priceLevel)
+        try container.encode(lastVisited, forKey: .lastVisited)
+        try container.encode(notes, forKey: .notes)
+
+        let stored = coordinate.map { StoredCoordinate(latitude: $0.latitude, longitude: $0.longitude) }
+        try container.encodeIfPresent(stored, forKey: .coordinate)
     }
 }
 
