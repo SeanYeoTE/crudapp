@@ -4,9 +4,7 @@ class PlaceTableCell: UITableViewCell {
 
     static let identifier = "PlaceTableCell"
 
-    var place: Place? {
-        didSet { configure() }
-    }
+    var place: Place?
 
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -16,9 +14,7 @@ class PlaceTableCell: UITableViewCell {
         super.setSelected(selected, animated: animated)
     }
 
-    private func configure() {
-        guard let place else { return }
-
+    func configure(with place: Place) {
         var content = defaultContentConfiguration()
         content.text = place.name
         content.secondaryText = "\(place.category.rawValue) · \(place.priceString) · ★ \(place.rating)"

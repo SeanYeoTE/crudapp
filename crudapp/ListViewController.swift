@@ -8,8 +8,12 @@
 import UIKit
 
 class ListViewController: UITableViewController, PlaceDetailViewControllerDelegate {
+    nonisolated enum Section: Hashable { case main }
+
     private let store = PlaceDataStore.shared
     private var places: [Place] { store.places }
+    private var dataSource: UITableViewDiffableDataSource<Section, Place>!
+    typealias DataSource = UITableViewDiffableDataSource<Section, Place>
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -24,21 +28,33 @@ class ListViewController: UITableViewController, PlaceDetailViewControllerDelega
             }
         )
         tableView.register(PlaceTableCell.self, forCellReuseIdentifier: PlaceTableCell.identifier)
+
+        dataSource = UITableViewDiffableDataSource<Section, Place>( tableView: tableView) { tableView, indexPath, item in
+            guard let cell = tableView.dequeueReusableCell(
+                withIdentifier: PlaceTableCell.identifier,
+                for: indexPath
+            ) as? PlaceTableCell else {
+                return UITableViewCell()
+            }
+            cell.configure(with: item)
+            return cell
+        }
+
+        dataSource.defaultRowAnimation = .fade
+        tableView.dataSource = dataSource
+        tableView.delegate = self
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        tableView.reloadData()
+        applySnapshot(animatingDifferences: false)
     }
 
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        places.count
-    }
-    override func tableView(_ tableView: UITableView,
-                            cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: PlaceTableCell.identifier, for: indexPath) as! PlaceTableCell
-        cell.place = places[indexPath.row]
-        return cell
+    private func applySnapshot(animatingDifferences: Bool = true) {
+        var snapshot = NSDiffableDataSourceSnapshot<Section, Place>()
+        snapshot.appendSections([.main])
+        snapshot.appendItems(places, toSection: .main)
+        dataSource.apply(snapshot, animatingDifferences: animatingDifferences)
     }
 
   // MARK: - UITableViewDelegate
@@ -61,16 +77,21 @@ class ListViewController: UITableViewController, PlaceDetailViewControllerDelega
     // MARK: - Delete
 
     override func tableView(_ tableView: UITableView,
-                            commit editingStyle: UITableViewCell.EditingStyle,
-                            forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete {
+                   trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath)
+    -> UISwipeActionsConfiguration? {
+        guard let place = dataSource.itemIdentifier(for: indexPath) else { return nil }
+
+        let delete = UIContextualAction(style: .destructive, title: "Delete") { _,_,done in
             do {
-                try store.deletePlace(at: indexPath.row)
-                tableView.deleteRows(at: [indexPath], with: .fade)
+                try self.store.deletePlace(place)
+                self.applySnapshot()
             } catch {
                 print("Failed to delete place: \(error)")
             }
+            done(true)
         }
+
+        return UISwipeActionsConfiguration(actions: [delete])
     }
 }
 
@@ -80,7 +101,7 @@ extension ListViewController: PlaceFormViewControllerDelegate {
     func didAddPlace(_ place: Place) {
         do {
             try store.addPlace(place)
-            tableView.reloadData()
+            applySnapshot()
         } catch {
             print("Failed to add place: \(error)")
         }
@@ -89,7 +110,7 @@ extension ListViewController: PlaceFormViewControllerDelegate {
     func didUpdatePlace(_ place: Place) {
         do {
             try store.updatePlace(place)
-            tableView.reloadData()
+            applySnapshot()
         } catch {
             print("Failed to update place: \(error)")
         }

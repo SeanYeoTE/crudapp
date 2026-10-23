@@ -29,7 +29,7 @@ private struct StoredCoordinate: Codable {
 /// The "Item" for this CRUD app.
 /// A class (reference type) so that every screen editing a Place
 /// mutates the same instance — pass by reference.
-struct Place: Identifiable, Codable {
+nonisolated struct Place: Identifiable, Codable, Hashable {
     let id: UUID
     var name: String              // String
     var category: PlaceCategory   // enum
@@ -94,6 +94,15 @@ struct Place: Identifiable, Codable {
 
         let stored = coordinate.map { StoredCoordinate(latitude: $0.latitude, longitude: $0.longitude) }
         try container.encodeIfPresent(stored, forKey: .coordinate)
+    }
+    
+    // Needed because CLLocationCoordinate2D makes this struct not Hashable
+    static func == (lhs: Place, rhs: Place) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 }
 
