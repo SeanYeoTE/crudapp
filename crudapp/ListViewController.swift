@@ -74,6 +74,7 @@ class ListViewController: UITableViewController, PlaceDetailViewControllerDelega
         snapshot.appendSections([.main])
         snapshot.appendItems(current, toSection: .main)
         dataSource.apply(snapshot, animatingDifferences: animatingDifferences)
+        updateBackgroundMessage()
     }
 
   // MARK: - UITableViewDelegate
@@ -111,6 +112,21 @@ class ListViewController: UITableViewController, PlaceDetailViewControllerDelega
         }
 
         return UISwipeActionsConfiguration(actions: [delete])
+    }
+    
+    private func updateBackgroundMessage() {
+        let label = UILabel()
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        if places.isEmpty {
+            label.text = "No items yet. Tap + to add one."
+        } else if isSearching && filteredPlaces(for: searchController.searchBar.text).isEmpty {
+            label.text = "No results."
+        } else {
+            tableView.backgroundView = nil
+            return
+        }
+        tableView.backgroundView = label
     }
 }
 
