@@ -14,6 +14,18 @@ class ListViewController: UITableViewController, PlaceDetailViewControllerDelega
     private var places: [Place] { store.places }
     private var dataSource: UITableViewDiffableDataSource<Section, Place>!
     typealias DataSource = UITableViewDiffableDataSource<Section, Place>
+    
+    private let searchController = UISearchController(searchResultsController: nil)
+    private func filteredPlaces(for searchText: String?) -> [Place] {
+        guard let searchText = searchText?.lowercased(), !searchText.isEmpty else {
+            return places
+        }
+        return places.filter { $0.name.lowercased().contains(searchText) }
+    }
+
+    private var isSearching: Bool {
+        searchController.isActive && !(searchController.searchBar.text?.isEmpty ?? true)
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -43,6 +55,12 @@ class ListViewController: UITableViewController, PlaceDetailViewControllerDelega
         dataSource.defaultRowAnimation = .fade
         tableView.dataSource = dataSource
         tableView.delegate = self
+
+        searchController.searchResultsUpdater = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = "Search Places"
+        navigationItem.searchController = searchController
+        definesPresentationContext = true
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -52,8 +70,9 @@ class ListViewController: UITableViewController, PlaceDetailViewControllerDelega
 
     private func applySnapshot(animatingDifferences: Bool = true) {
         var snapshot = NSDiffableDataSourceSnapshot<Section, Place>()
+        let current = isSearching ? filteredPlaces(for: searchController.searchBar.text) : places
         snapshot.appendSections([.main])
-        snapshot.appendItems(places, toSection: .main)
+        snapshot.appendItems(current, toSection: .main)
         dataSource.apply(snapshot, animatingDifferences: animatingDifferences)
     }
 
@@ -117,7 +136,11 @@ extension ListViewController: PlaceFormViewControllerDelegate {
     }
 }
 
-
+extension ListViewController: UISearchResultsUpdating {
+    func updateSearchResults(for searchController: UISearchController) {
+        applySnapshot()
+    }
+}
 
 
 #Preview {
